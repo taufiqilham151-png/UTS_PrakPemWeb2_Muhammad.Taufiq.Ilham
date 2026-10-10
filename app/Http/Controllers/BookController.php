@@ -7,7 +7,6 @@ use App\Models\Book;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
-
 class BookController extends Controller
 {
     /**
@@ -15,47 +14,18 @@ class BookController extends Controller
      */
     public function index(Request $request)
     {
-            $search = $request->input('search');
+        $search = $request->input('search');
 
-            $books = Book::when($search, function ($query, $search) {
-        return $query->where('title', 'like', '%' . $search . '%')
-                     ->orWhere('author', 'like', '%' . $search . '%');
-         })
-            ->latest() // <--- Tambahkan ini agar data terbaru di atas
-            ->paginate(10);
-
-    $books->appends(['search' => $search]);
-
-            $books = Book::when($search, function ($query, $search) {
+        $books = Book::when($search, function ($query, $search) {
             return $query->where('title', 'like', '%' . $search . '%')
-                     ->orWhere('author', 'like', '%' . $search . '%');
-            })->paginate(10);
+                         ->orWhere('author', 'like', '%' . $search . '%');
+        })
+        ->latest() // Agar data terbaru muncul di urutan paling atas
+        ->paginate(10);
 
-            $books->appends(['search' => $search]);
+        $books->appends(['search' => $search]);
 
-            return view('books.index', compact('books', 'search'));
-
-        
-            //  $books = Book::paginate(10);
-            //  return view('books.index', compact('books'));
-            //   ->latest()
-            //  ->paginate(10);
-
-        //         $books = [
-        //     [
-
-        //         'id' => 1,
-        //         'title' => 'Dasar Pemrograman Web',
-        //         'author' => 'Ayu Pratama',
-        //     ],
-        //     [
-        //         'id' => 2,
-        //         'title' => 'Basis Data Terapan',
-        //         'author' => 'Bima Nugraha',
-        //     ],
-        // ];
-
-        // return view('books.index', compact('books'));
+        return view('books.index', compact('books', 'search'));
     }
 
     public function show(int $id): View
@@ -69,7 +39,7 @@ class BookController extends Controller
      */
     public function create(): View
     {
-            return view('books.create');
+        return view('books.create');
     }
 
     /**
@@ -77,66 +47,21 @@ class BookController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
-        $request->validate([
-    'judul_buku' => 'required',
-    'penulis'    => 'required',
-    'tahun_terbit' => 'required|numeric',
-    'stok'       => 'required|numeric|min:0',
-]);
+        // 1. Validasi data sesuai dengan name di form create.blade.php
+        $validated = $request->validate([
+            'title'            => 'required|string|max:255',
+            'author'           => 'required|string|max:255',
+            'publication_year' => 'required|numeric',
+            'stok'             => 'required|numeric|min:0',
+            'description'      => 'nullable|string',
+        ]);
 
-// Simpan data
+        // 2. Simpan data ke database
+        Book::create($validated);
 
-        $request->validate([
-        'title' => 'required',
-        'author' => 'required',
-        'publication_year' => 'required|numeric',
-    ]);
-
-    
-
-    $request->validate([
-        'title' => 'required',
-        'author' => 'required',
-        'year' => 'required|numeric',
-    ]);
-
-    Book::create($request->all());
-
-    return redirect('/books')->with('success', 'Data buku berhasil ditambahkan!');
-    return redirect()->route('books.index')->with('success', 'Buku berhasil ditambahkan!');
-        // $validated = $request->validate([
-        // 'title' => ['required', 'string', 'max:255'],
-        // 'isbn' => [
-        //     'nullable',
-        //     'string',
-        //     'max:20',
-        //     'unique:books,isbn',
-        // ],
-        // 'author' => ['required', 'string', 'max:150'],
-        // 'publisher' => ['nullable', 'string', 'max:150'],
-        // 'published_year' => [
-        //     'nullable',
-        //     'integer',
-        //     'min:1900',
-        //     'max:'.date('Y'),
-        // ],
-        // 'price' => ['required', 'numeric', 'min:0'],
-        // 'stock' => ['required', 'integer', 'min:0'],
-        // 'description' => ['nullable', 'string'],
-    // ]);
-
-    Book::create($validated);
-
-    return redirect()
-        ->route('books.index')
-        ->with('success', 'Data buku berhasil ditambahkan.');
-
+        // 3. Redirect ke halaman utama dengan pesan sukses
+        return redirect()->route('books.index')->with('success', 'Data buku berhasil ditambahkan!');
     }
-
-    /**
-     * Display the specified resource.
-     */
-    
 
     /**
      * Show the form for editing the specified resource.
@@ -151,24 +76,23 @@ class BookController extends Controller
      */
     public function update(Request $request, Book $book)
     {
-
         $request->validate([
-        'title' => 'required',
-        'author' => 'required',
-        'publication_year' => 'required|numeric', 
-        'stok'         => 'required|numeric|min:0',
-        'description' => 'nullable|string',
-    ]);
+            'title'            => 'required',
+            'author'           => 'required',
+            'publication_year' => 'required|numeric', 
+            'stock' => 'required|integer',
+            'description'      => 'nullable|string',
+        ]);
 
-    $book->update([
-        'title'            => $request->title,
-        'author'           => $request->author,
-        'publication_year' => $request->publication_year,
-        'stock'            => $request->stok, // Ubah 'stok' menjadi 'stock' (sesuai Model & Database)
-        'description'      => $request->description, // Tambahkan ini agar deskripsi juga ter-update
-    ]);
+        $book->update([
+            'title'            => $request->title,
+            'author'           => $request->author,
+            'publication_year' => $request->publication_year,
+            'stock'             => $request->stock, // Pastikan kolom di database Anda bernama 'stok'
+            'description'      => $request->description,
+        ]);
 
-    return redirect()->route('books.index')->with('success', 'Data buku berhasil diperbarui!');
+        return redirect()->route('books.index')->with('success', 'Data buku berhasil diperbarui!');
     }
 
     /**
@@ -177,8 +101,8 @@ class BookController extends Controller
     public function destroy($id)
     {
         $book = Book::findOrFail($id);
-    $book->delete();
+        $book->delete();
 
-    return redirect('/books')->with('success', 'Data buku berhasil dihapus!');
+        return redirect()->route('books.index')->with('success', 'Data buku berhasil dihapus!');
     }
 }

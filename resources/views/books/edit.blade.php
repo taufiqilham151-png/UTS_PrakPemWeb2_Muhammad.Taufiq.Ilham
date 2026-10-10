@@ -20,8 +20,8 @@
     </div>
 
     <div>
-    <label for="stok">Stok:</label><br>
-    <input type="number" name="stok" value="{{ $book->stok }}">
+    <label for="stock">Stok:</label><br>
+    <input type="number" name="stock" value="{{ old('stock', $book->stock) }}">
     </div>
 
     <div class="form-group">

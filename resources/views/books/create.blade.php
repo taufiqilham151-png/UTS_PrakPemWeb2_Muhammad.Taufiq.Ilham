@@ -72,7 +72,8 @@
     <div>
         <label>Tahun Terbit:</label>
         <input type="number" name="publication_year" required>
-
+    </div>
+    
     <div>
     <label for="stok">Stok Buku:</label>
     <input type="number" name="stok" id="stok" value="{{ old('stok', $book->stok ?? 0) }}" required>
